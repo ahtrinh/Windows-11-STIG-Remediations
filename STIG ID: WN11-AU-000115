@@ -1,0 +1,43 @@
+<#
+.SYNOPSIS
+    The system must be configured to audit Privilege Use - Sensitive Privilege Use successes to provide
+    visibility into successful use of sensitive privileges for detection and forensic analysis.
+
+.NOTES
+    Author          : Alex Trinh
+    LinkedIn        :
+    GitHub          : github.com/ahtrinh
+    Date Created    : 2026-01-30
+    Last Modified   : 2026-01-30
+    Version         : 1.0
+    CVEs            : N/A
+    Plugin IDs      : N/A
+    STIG-ID         : WN11-AU-000115
+
+.TESTED ON
+    Date(s) Tested  :
+    Tested By       :
+    Systems Tested  :
+    PowerShell Ver. :
+
+.USAGE
+    Run as Administrator.
+    Example syntax:
+    PS C:\> .\WN11-AU-000115.ps1
+#>
+
+# NOTE:
+# WN11-SO-000030 (force subcategory auditing) must be enabled for this to be effective.
+
+# Remediate: Enable Success auditing for "Sensitive Privilege Use"
+auditpol /set /subcategory:"Sensitive Privilege Use" /success:enable | Out-Null
+
+# Verify (mirrors STIG check)
+$verify = (auditpol /get /subcategory:"Sensitive Privilege Use" | Select-String "Sensitive Privilege Use").ToString()
+
+if ($verify -match "Success\s*Enabled") {
+    Write-Host "COMPLIANT: Sensitive Privilege Use auditing is enabled for Success."
+} else {
+    Write-Host "NON-COMPLIANT: Sensitive Privilege Use Success auditing is not enabled."
+    auditpol /get /subcategory:"Sensitive Privilege Use"
+}
