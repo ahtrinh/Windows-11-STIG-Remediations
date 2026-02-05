@@ -1,0 +1,43 @@
+<#
+.SYNOPSIS
+    The system must be configured to audit Privilege Use - Sensitive Privilege Use failures to support detection
+    of attempted use of sensitive privileges and provide forensic visibility.
+
+.NOTES
+    Author          : Alex Trinh
+    LinkedIn        :
+    GitHub          : github.com/ahtrinh
+    Date Created    : 2026-01-30
+    Last Modified   : 2026-01-30
+    Version         : 1.0
+    CVEs            : N/A
+    Plugin IDs      : N/A
+    STIG-ID         : WN11-AU-000110
+
+.TESTED ON
+    Date(s) Tested  :
+    Tested By       :
+    Systems Tested  :
+    PowerShell Ver. :
+
+.USAGE
+    Run as Administrator.
+    Example syntax:
+    PS C:\> .\WN11-AU-000110.ps1
+#>
+
+# NOTE:
+# WN11-SO-000030 must be enabled for subcategory auditing to apply as expected.
+
+# Remediate: Enable Failure auditing for "Sensitive Privilege Use"
+auditpol /set /subcategory:"Sensitive Privilege Use" /failure:enable | Out-Null
+
+# Verify
+$verify = (auditpol /get /subcategory:"Sensitive Privilege Use" | Select-String -Pattern "Sensitive Privilege Use").ToString()
+
+if ($verify -match "Failure\s*Enabled") {
+    Write-Host "COMPLIANT: Sensitive Privilege Use auditing is enabled for Failures."
+} else {
+    Write-Host "NON-COMPLIANT: Sensitive Privilege Use Failure auditing is not enabled."
+    auditpol /get /subcategory:"Sensitive Privilege Use"
+}
