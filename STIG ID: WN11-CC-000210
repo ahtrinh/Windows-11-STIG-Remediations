@@ -1,0 +1,61 @@
+<#
+.SYNOPSIS
+    Microsoft Defender SmartScreen for Explorer must be enabled to warn and block users from running
+    potentially malicious programs downloaded from the internet.
+
+.NOTES
+    Author          : Alex Trinh
+    LinkedIn        :
+    GitHub          : github.com/ahtrinh
+    Date Created    : 2026-01-30
+    Last Modified   : 2026-01-30
+    Version         : 1.0
+    CVEs            : N/A
+    Plugin IDs      : N/A
+    STIG-ID         : WN11-CC-000210
+
+.TESTED ON
+    Date(s) Tested  :
+    Tested By       :
+    Systems Tested  :
+    PowerShell Ver. :
+
+.USAGE
+    Run as Administrator.
+    Example syntax:
+    PS C:\> .\WN11-CC-000210.ps1
+#>
+
+# Compliance requirements:
+# HKLM\SOFTWARE\Policies\Microsoft\Windows\System
+#   EnableSmartScreen        (REG_DWORD) = 1
+#   ShellSmartScreenLevel    (REG_SZ)    = "Block"
+
+$RegPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System"
+
+# Ensure registry key exists
+if (-not (Test-Path $RegPath)) {
+    New-Item -Path $RegPath -Force | Out-Null
+}
+
+# Enable SmartScreen
+New-ItemProperty -Path $RegPath -Name "EnableSmartScreen" `
+    -Value 1 -PropertyType DWord -Force | Out-Null
+
+# Set SmartScreen enforcement level to Block (Warn and prevent bypass)
+New-ItemProperty -Path $RegPath -Name "ShellSmartScreenLevel" `
+    -Value "Block" -PropertyType String -Force | Out-Null
+
+# Verify configuration (mirrors STIG check)
+$enableCheck = (Get-ItemProperty -Path $RegPath -Name EnableSmartScreen `
+                -ErrorAction SilentlyContinue).EnableSmartScreen
+$levelCheck  = (Get-ItemProperty -Path $RegPath -Name ShellSmartScreenLevel `
+                -ErrorAction SilentlyContinue).ShellSmartScreenLevel
+
+if ($enableCheck -eq 1 -and $levelCheck -eq "Block") {
+    Write-Host "COMPLIANT: Microsoft Defender SmartScreen for Explorer is enabled and set to Block."
+} else {
+    Write-Host "NON-COMPLIANT: SmartScreen configuration incorrect."
+    Write-Host "EnableSmartScreen = $enableCheck"
+    Write-Host "ShellSmartScreenLevel = $levelCheck"
+}
