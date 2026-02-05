@@ -1,0 +1,57 @@
+<#
+.SYNOPSIS
+    Wi-Fi Sense must be disabled to prevent Windows from automatically connecting to suggested open hotspots
+    and networks shared by contacts, which could expose the system to unsecured or malicious networks.
+
+.NOTES
+    Author          : Alex Trinh
+    LinkedIn        :
+    GitHub          : github.com/ahtrinh
+    Date Created    : 2026-01-30
+    Last Modified   : 2026-01-30
+    Version         : 1.0
+    CVEs            : N/A
+    Plugin IDs      : N/A
+    STIG-ID         : WN11-CC-000065
+
+.TESTED ON
+    Date(s) Tested  :
+    Tested By       :
+    Systems Tested  :
+    PowerShell Ver. :
+
+.USAGE
+    Run as Administrator.
+    Example syntax:
+    PS C:\> .\WN11-CC-000065.ps1
+#>
+
+# Compliance requirement:
+# HKLM\SOFTWARE\Microsoft\WcmSvc\wifinetworkmanager\config
+#   AutoConnectAllowedOEM (REG_DWORD) = 0
+
+$RegPath  = "HKLM:\SOFTWARE\Microsoft\WcmSvc\wifinetworkmanager\config"
+$RegName  = "AutoConnectAllowedOEM"
+$Expected = 0
+
+# Ensure registry key exists
+if (-not (Test-Path $RegPath)) {
+    New-Item -Path $RegPath -Force | Out-Null
+}
+
+# Read current value (returns $null if missing)
+$current = (Get-ItemProperty -Path $RegPath -Name $RegName -ErrorAction SilentlyContinue).$RegName
+
+# Remediate if missing or incorrect
+if ($null -eq $current -or $current -ne $Expected) {
+    New-ItemProperty -Path $RegPath -Name $RegName -Value $Expected -PropertyType DWord -Force | Out-Null
+}
+
+# Verify final configuration (mirrors STIG check)
+$verify = (Get-ItemProperty -Path $RegPath -Name $RegName -ErrorAction SilentlyContinue).$RegName
+
+if ($verify -eq $Expected) {
+    Write-Host "COMPLIANT: Wi-Fi Sense is disabled (AutoConnectAllowedOEM = 0)."
+} else {
+    Write-Host "NON-COMPLIANT: Failed to disable Wi-Fi Sense. Current value is $verify."
+}
