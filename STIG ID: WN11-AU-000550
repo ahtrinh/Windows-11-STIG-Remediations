@@ -1,0 +1,45 @@
+<#
+.SYNOPSIS
+    Windows 11 must be configured to audit Other Policy Change Events successes to provide visibility into
+    security policy, filtering platform, and cryptographic policy changes.
+
+.NOTES
+    Author          : Alex Trinh
+    LinkedIn        :
+    GitHub          : github.com/ahtrinh
+    Date Created    : 2026-01-30
+    Last Modified   : 2026-01-30
+    Version         : 1.0
+    CVEs            : N/A
+    Plugin IDs      : N/A
+    STIG-ID         : WN11-AU-000550
+
+.TESTED ON
+    Date(s) Tested  :
+    Tested By       :
+    Systems Tested  :
+    PowerShell Ver. :
+
+.USAGE
+    Run as Administrator.
+    Example syntax:
+    PS C:\> .\WN11-AU-000550.ps1
+#>
+
+# NOTE:
+# WN11-SO-000030 (Force audit policy subcategory settings) must be enabled
+# for advanced audit subcategories to apply correctly.
+
+# Remediate: Enable Success auditing for "Other Policy Change Events"
+auditpol /set /subcategory:"Other Policy Change Events" /success:enable | Out-Null
+
+# Verify (mirrors STIG check logic)
+$verify = (auditpol /get /subcategory:"Other Policy Change Events" |
+           Select-String "Other Policy Change Events").ToString()
+
+if ($verify -match "Success\s*Enabled") {
+    Write-Host "COMPLIANT: Other Policy Change Events auditing is enabled for Success."
+} else {
+    Write-Host "NON-COMPLIANT: Other Policy Change Events Success auditing is not enabled."
+    auditpol /get /subcategory:"Other Policy Change Events"
+}
