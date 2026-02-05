@@ -1,0 +1,55 @@
+<#
+.SYNOPSIS
+    WDigest Authentication must be disabled to prevent clear-text credentials from being stored in LSASS memory.
+
+.NOTES
+    Author          : Alex Trinh
+    LinkedIn        :
+    GitHub          : github.com/ahtrinh
+    Date Created    : 2026-01-30
+    Last Modified   : 2026-01-30
+    Version         : 1.0
+    CVEs            : N/A
+    Plugin IDs      : N/A
+    STIG-ID         : WN11-CC-000038
+    SRG             : SRG-OS-000095-GPOS-00049
+    Severity        : medium (CAT II)
+    CCI             : CCI-000381
+    Vuln ID         : V-253358
+
+.TESTED ON
+    Date(s) Tested  :
+    Tested By       :
+    Systems Tested  :
+    PowerShell Ver. :
+
+.USAGE
+    Run as Administrator.
+    Example syntax:
+    PS C:\> .\WN11-CC-000038.ps1
+#>
+
+$RegPath = "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\Wdigest"
+$RegName = "UseLogonCredential"
+$Expected = 0
+
+# Ensure registry path exists
+if (-not (Test-Path $RegPath)) {
+    New-Item -Path $RegPath -Force | Out-Null
+}
+
+# Read current value
+$current = Get-ItemPropertyValue -Path $RegPath -Name $RegName -ErrorAction SilentlyContinue
+
+# Remediate if necessary
+if ($current -ne $Expected) {
+    New-ItemProperty -Path $RegPath -Name $RegName -Value $Expected -PropertyType DWord -Force | Out-Null
+}
+
+# Verify
+$verify = Get-ItemPropertyValue -Path $RegPath -Name $RegName -ErrorAction SilentlyContinue
+if ($verify -eq $Expected) {
+    Write-Host "COMPLIANT: WDigest Authentication is disabled (UseLogonCredential = 0)."
+} else {
+    Write-Host "NON-COMPLIANT: Failed to disable WDigest Authentication."
+}
