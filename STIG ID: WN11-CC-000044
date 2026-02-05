@@ -1,0 +1,57 @@
+<#
+.SYNOPSIS
+    Internet Connection Sharing (ICS) must be disabled to prevent the system from acting as a network gateway
+    or mobile hotspot, which could expose it to unauthorized or malicious access.
+
+.NOTES
+    Author          : Alex Trinh
+    LinkedIn        :
+    GitHub          : github.com/ahtrinh
+    Date Created    : 2026-01-30
+    Last Modified   : 2026-01-30
+    Version         : 1.0
+    CVEs            : N/A
+    Plugin IDs      : N/A
+    STIG-ID         : WN11-CC-000044
+
+.TESTED ON
+    Date(s) Tested  :
+    Tested By       :
+    Systems Tested  :
+    PowerShell Ver. :
+
+.USAGE
+    Run as Administrator.
+    Example syntax:
+    PS C:\> .\WN11-CC-000044.ps1
+#>
+
+# Compliance requirement:
+# HKLM\SOFTWARE\Policies\Microsoft\Windows\Network Connections
+#   NC_ShowSharedAccessUI (REG_DWORD) = 0
+
+$RegPath  = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Network Connections"
+$RegName  = "NC_ShowSharedAccessUI"
+$Expected = 0
+
+# Ensure registry key exists
+if (-not (Test-Path $RegPath)) {
+    New-Item -Path $RegPath -Force | Out-Null
+}
+
+# Read current value (returns $null if missing)
+$current = (Get-ItemProperty -Path $RegPath -Name $RegName -ErrorAction SilentlyContinue).$RegName
+
+# Remediate if missing or incorrect
+if ($null -eq $current -or $current -ne $Expected) {
+    New-ItemProperty -Path $RegPath -Name $RegName -Value $Expected -PropertyType DWord -Force | Out-Null
+}
+
+# Verify final configuration (mirrors STIG check)
+$verify = (Get-ItemProperty -Path $RegPath -Name $RegName -ErrorAction SilentlyContinue).$RegName
+
+if ($verify -eq $Expected) {
+    Write-Host "COMPLIANT: Internet Connection Sharing is disabled (NC_ShowSharedAccessUI = 0)."
+} else {
+    Write-Host "NON-COMPLIANT: Failed to disable Internet Connection Sharing. Current value is $verify."
+}
