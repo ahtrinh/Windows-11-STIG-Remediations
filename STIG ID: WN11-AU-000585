@@ -1,0 +1,45 @@
+<#
+.SYNOPSIS
+    Windows 11 must be configured to audit Process Creation failures to provide visibility
+    into failed process execution attempts for security monitoring and forensic analysis.
+
+.NOTES
+    Author          : Alex Trinh
+    LinkedIn        :
+    GitHub          : github.com/ahtrinh
+    Date Created    : 2026-01-30
+    Last Modified   : 2026-01-30
+    Version         : 1.0
+    CVEs            : N/A
+    Plugin IDs      : N/A
+    STIG-ID         : WN11-AU-000585
+
+.TESTED ON
+    Date(s) Tested  :
+    Tested By       :
+    Systems Tested  :
+    PowerShell Ver. :
+
+.USAGE
+    Run as Administrator.
+    Example syntax:
+    PS C:\> .\WN11-AU-000585.ps1
+#>
+
+# NOTE:
+# WN11-SO-000030 (Force audit policy subcategory settings) must be enabled
+# for advanced audit subcategories to apply correctly.
+
+# Remediate: Enable Failure auditing for "Process Creation"
+auditpol /set /subcategory:"Process Creation" /failure:enable | Out-Null
+
+# Verify configuration (mirrors STIG check)
+$verify = (auditpol /get /subcategory:"Process Creation" |
+           Select-String "Process Creation").ToString()
+
+if ($verify -match "Failure\s*Enabled") {
+    Write-Host "COMPLIANT: Process Creation auditing is enabled for Failures."
+} else {
+    Write-Host "NON-COMPLIANT: Process Creation Failure auditing is not enabled."
+    auditpol /get /subcategory:"Process Creation"
+}
